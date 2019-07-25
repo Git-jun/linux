@@ -1,0 +1,31 @@
+Rpm包是对源码包安装结果的一个压缩的过程.
+Rpmbuild -ba  任意名  会在家目录下出现  rpmbuild 目录
+该目录下有BUILD  BUILD  RPMS  SOURCES  SPECS  SRPMSName:
+nginx                                        #源码包软件名称
+Version:1.12.2                                    #源码包软件的版本号
+Release:    10                                        #制作的RPM包版本号
+Summary: Nginx is a web server software.            #RPM软件的概述    
+License:GPL                                        #软件的协议
+URL:    www.test.com                                    #网址
+Source0:nginx-1.12.2.tar.gz                        #源码包文件的全称
+#BuildRequires:                                    #制作RPM时的依赖关系
+#Requires:                                        #安装RPM时的依赖关系
+%description
+nginx [engine x] is an HTTP and reverse proxy server.    #软件的详细描述
+%post  (安装后脚本)
+useradd nginx                               #非必需操作：安装后脚本(创建账户)
+%prep
+%setup -q                                #自动解压源码包，并cd进入目录
+%build
+./configure
+make %{?_smp_mflags}
+%install
+make install DESTDIR=%{buildroot}
+%files
+%doc
+/usr/local/nginx/*                    #对哪些文件与目录打包
+%changelog
+
+运行rpmbuild -ba  /root/rpmbuild/SPECS/*.spec  生成rpm包
+
+yum info nginx 查看*.spec 信息

@@ -1,0 +1,100 @@
+一集群:高性能计算集群HPC 负载均衡(LB)集群 高可用(HA)集群
+(1)提高性能
+(2)降低成本
+(3)提高可扩展性
+(4)增强可靠性
+1 LVS集群组成(lvs集群,性能高,但是功能少,nginx性能低,但功能多)
+前段:负载均衡群
+中间:服务器群组层
+底端:数据共享存储层
+2 LVS术语
+(1)director server:调度服务器
+(2)real server:真实服务器
+(3)vip:虚拟ip地址
+(4)rip:真实ip地址
+(5)dip:调度器连接节点服务器的ip地址
+3 LVS工作模式
+(1)NAT模式-a/-e...-m)
+(2)DR模式(-a/-e...-g)
+(3)TUN模式(-a/-e...-i)
+4 负载均衡调度算法
+(1)轮询(rr) 加权轮询(wrr) 最少连接(lc) 加权最少连接(wlc)源地址散列(sh)(-A/-E......-s lc/rr/wrr/wlc/sh)
+
+
+二 使用命令增删改查LVS集群规则
+1创建LVS虚拟集群服务器
+[root@proxy ~]# yum -y install ipvsadm
+[root@proxy ~]# ipvsadm -A -t(tcp协议) 192.168.4.5:80 -s(算法) wrr
+2为集群添加若干real server
+[root@proxy ~]# ipvsadm -a -t 192.168.4.5:80 -r 192.168.2.100 -w 1
+3永久保存所有规则
+[root@proxy ~]# ipvsadm-save -n > /etc/sysconfig/ipvsadm
+4清空所有规则
+[root@proxy ~]# ipvsadm -C
+
+三 配置服务器的基础环境
+1设置web服务器
+2部署lvs-nat模式调度器
+[root@proxy ~]# echo 1 > /proc/sys/net/ipv4/ip_forward
+[root@proxy ~]# echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
+#修改配置文件，设置永久规则
+3创建集群服务器ipvsadm -A .... -s wrr
+4添加真实服务器ipvsadm -a .... -w 1 -m
+5查看规则并保存
+root@proxy ~]# ipvsadm -Ln
+[root@proxy ~]# ipvsadm-save -n > /etc/sysconfig/ipvsadm
+
+在rhel7 Centos7有两个程序控制网络
+network   networkManager  
+
+
+部署LVS-DR集群
+**DIP是调度器与后端服务器通信的IP地址（VIP必须配置在虚拟接口）。
+  ! 地址突问题解决办法
+服务端
+1.lvs服务器设置dip在真实接口(vip设置在虚拟接口)
+客户端
+1.利用lo虚拟回环接口设置伪装vip     /etc/sysconfig/netword-scripts/
+2.修改内核配置文件让伪装vip不回应广播 /etc/sysctl.conf
+net.ipv4.conf.all.arp_ignore = 1RIP
+net.ipv4.conf.lo.arp_ignore = 1
+net.ipv4.conf.all.arp_announce = 2
+net.ipv4.conf.lo.arp_announce = 2
+
+步骤二：proxy调度器安装软件并部署LVS-DR模式调度器
+yum -y install ipvsadm
+清理之前实验的规则，创建新的集群服务器规则
+[root@proxy ~]# ipvsadm -C                                #清空所有规则
+[root@proxy ~]# ipvsadm -A -t 192.168.4.15:80 -s wrr
+3）添加真实服务器(-g参数设置LVS工作模式为DR模式，-w设置权重)
+[root@proxy ~]# ipvsadm -a -t 192.168.4.15:80 -r 192.168.4.100 -g -w 1
+[root@proxy ~]# ipvsadm -a -t 192.168.4.15:80 -r 192.168.4.200 -g -w 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
